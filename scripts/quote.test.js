@@ -13,7 +13,7 @@ const accepted = () => ({ ok: true, json: async () => ({ next: 'https://formspre
 
 // A deliberately small form fixture: actual field markup, native-like required
 // validation and successful-control serialization, with no browser or network.
-function fixture({ formEndpoint = '', respond = accepted } = {}) {
+function fixture({ formEndpoint = '', respond = accepted, language } = {}) {
   const ids = new Map();
   const timers = new Map();
   const requests = [];
@@ -67,6 +67,11 @@ function fixture({ formEndpoint = '', respond = accepted } = {}) {
     removeAttribute(name) { this.attributes.delete(name); }
     hasAttribute(name) { return this.attributes.has(name); }
     setCustomValidity(message) { this.validationMessage = message; }
+    get validity() {
+      const valueMissing = this.required && !this.value;
+      const typeMismatch = this.type === 'email' && Boolean(this.value) && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.value);
+      return { valueMissing, typeMismatch, valid: !(valueMissing || typeMismatch || this.validationMessage) };
+    }
     focus() { activeElement = this; }
     select() { this.selected = true; }
     matches(selector) {
@@ -124,6 +129,15 @@ function fixture({ formEndpoint = '', respond = accepted } = {}) {
     matchMedia: () => ({ matches: false, addEventListener() {} }),
     addEventListener() {}, scrollY: 0, innerHeight: 800
   };
+  if (language) {
+    const spanish = {};
+    window.CornerStoneI18n = {
+      get language() { return language; },
+      register: (dictionary) => Object.assign(spanish, dictionary),
+      t: (message, params = {}) => (language === 'es' ? spanish[message] ?? message : message)
+        .replace(/\{(\w+)\}/g, (match, name) => params[name] ?? match)
+    };
+  }
   vm.runInNewContext(fs.readFileSync(path.join(root, 'site-config.js'), 'utf8'), { window });
   window.CornerStoneConfig = { ...window.CornerStoneConfig, forms: { formspreeEndpoint: formEndpoint } };
   class MockFormData extends Map {
@@ -154,6 +168,10 @@ function fixture({ formEndpoint = '', respond = accepted } = {}) {
       for (const [name, value] of Object.entries(input)) form.elements.namedItem(name).value = value;
     },
     submit: () => form.dispatch('submit'),
+    setLanguage(nextLanguage) {
+      language = nextLanguage;
+      (documentListeners.get('languagechange') || []).forEach((callback) => callback({ detail: { language } }));
+    },
     clickService(project, overrides = {}) {
       const link = new Control('a', 'href="#contact"');
       link.dataset.quoteProject = project;
@@ -333,4 +351,84 @@ test('service links choose a real project option and invalidate the previous pre
   page.ids.get('quote-fields').disabled = true;
   page.clickService('Commercial masonry');
   assert.equal(page.field('project').value, 'Fireplaces');
+});
+
+test('language switching translates the prepared message and links without changing visitor input', async () => {
+  const page = fixture({ language: 'en' });
+  page.fill({ name: 'María García', details: 'Reparar el muro del jardín.', email: '', phone: '' });
+  await page.submit();
+  assert.match(page.ids.get('quote-message').value, /^Hi Roy/);
+  page.setLanguage('es');
+  assert.equal(page.field('name').value, 'María García');
+  assert.equal(page.field('details').value, 'Reparar el muro del jardín.');
+  assert.equal(page.field('project').value, 'Brick repair');
+  assert.equal(page.ids.get('quote-preview').hidden, false);
+  assert.match(page.ids.get('quote-message').value, /^Hola, Roy/);
+  assert.match(page.ids.get('quote-message').value, /Tipo de proyecto: Reparación de ladrillo/);
+  assert.match(page.ids.get('quote-submit').textContent, /Revisar solicitud/);
+  assert.match(page.ids.get('quote-status').textContent, /Aún no se ha enviado nada/);
+  assert.equal(new URL(page.ids.get('quote-text').href).searchParams.get('body'), page.ids.get('quote-message').value);
+  assert.match(new URL(page.ids.get('quote-email').href).searchParams.get('subject'), /Solicitud de cotización/);
+  await page.ids.get('quote-copy').dispatch('click');
+  assert.match(page.ids.get('quote-status').textContent, /^Mensaje copiado/);
+  page.setLanguage('en');
+  assert.match(page.ids.get('quote-message').value, /^Hi Roy/);
+  assert.match(page.ids.get('quote-status').textContent, /^Message copied/);
+  assert.equal(page.requests.length, 0);
+});
+
+test('required, email and phone validation follow the selected language', async () => {
+  const page = fixture({ formEndpoint: endpoint, language: 'es' });
+  page.fill({ name: '', project: '', email: 'invalid-address', phone: '123' });
+  await page.submit();
+  assert.equal(page.requests.length, 0);
+  assert.equal(page.field('name').validationMessage, 'Completa este campo.');
+  assert.equal(page.field('project').validationMessage, 'Elige un tipo de proyecto.');
+  assert.match(page.field('email').validationMessage, /correo electrónico válida/);
+  assert.match(page.field('phone').validationMessage, /7 y 15 dígitos/);
+  page.setLanguage('en');
+  assert.equal(page.field('name').validationMessage, 'Please fill out this field.');
+  assert.equal(page.field('email').validationMessage, 'Please enter a valid email address.');
+  page.fill();
+  await page.form.dispatch('input');
+  assert.equal(page.field('email').validationMessage, '');
+});
+
+test('server errors translate field labels and provide Spanish guidance without untranslated server copy', async () => {
+  const page = fixture({ formEndpoint: endpoint, language: 'en', respond: async () => ({ ok: false, status: 422, json: async () => ({ errors: [{ field: 'email', message: 'Please check this email.' }] }) }) });
+  page.fill();
+  await page.submit();
+  page.setLanguage('es');
+  assert.equal(page.field('email').validationMessage, 'Revisa este campo e inténtalo de nuevo.');
+  assert.match(page.ids.get('quote-error').textContent, /Correo electrónico: Revisa este campo/);
+  assert.doesNotMatch(page.ids.get('quote-error').textContent, /Please/);
+  assert.equal(page.field('name').value, 'Jamie Customer');
+  page.setLanguage('en');
+  assert.equal(page.field('email').validationMessage, 'Please check this email.');
+});
+
+test('switching language while sending preserves submitted values and disabled state', async () => {
+  let resolveRequest;
+  const page = fixture({ formEndpoint: endpoint, language: 'es', respond: () => new Promise((resolve) => { resolveRequest = resolve; }) });
+  page.fill();
+  const pending = page.submit();
+  assert.equal(page.requests[0].body.get('language'), 'es');
+  assert.equal(page.requests[0].body.get('project'), 'Brick repair');
+  assert.match(page.requests[0].body.get('message'), /^Hola, Roy/);
+  assert.match(page.requests[0].body.get('_subject'), /cotización/);
+  assert.equal(page.ids.get('quote-submit').textContent, 'Enviando…');
+  page.setLanguage('en');
+  assert.equal(page.ids.get('quote-fields').disabled, true);
+  assert.equal(page.ids.get('quote-submit').disabled, true);
+  assert.equal(page.ids.get('quote-submit').textContent, 'Sending…');
+  assert.equal(page.field('name').value, 'Jamie Customer');
+  assert.equal(page.requests[0].body.get('language'), 'es');
+  await page.submit();
+  assert.equal(page.requests.length, 1);
+  resolveRequest(accepted());
+  await pending;
+  assert.match(page.ids.get('quote-status').textContent, /Your request was received/);
+  page.setLanguage('es');
+  assert.match(page.ids.get('quote-status').textContent, /Recibimos tu solicitud/);
+  assert.equal(page.ids.get('quote-fields').disabled, false);
 });

@@ -7,12 +7,72 @@ const mobileNav = window.matchMedia('(max-width: 1000px)');
 const config = window.CornerStoneConfig ?? {};
 const business = config.business ?? {};
 const pageContent = [...document.querySelectorAll('main, .site-footer')];
+const i18n = window.CornerStoneI18n;
+i18n?.register({
+  'Open navigation': 'Abrir menú',
+  'Close navigation': 'Cerrar menú',
+  'Email': 'Correo electrónico',
+  'Text message': 'Mensaje de texto',
+  'Phone call': 'Llamada telefónica',
+  'Hi {contactName}, I would like a free quote from {businessName}.': 'Hola, {contactName}. Me gustaría solicitar una cotización gratuita de {businessName}.',
+  'Name: {name}': 'Nombre: {name}',
+  'Project city: {city}': 'Ciudad del proyecto: {city}',
+  'Project type: {project}': 'Tipo de proyecto: {project}',
+  'Preferred reply: {contactPreference}': 'Medio de contacto preferido: {contactPreference}',
+  'Email: {email}': 'Correo electrónico: {email}',
+  'Phone: {phone}': 'Teléfono: {phone}',
+  'Details: {details}': 'Detalles: {details}',
+  'Masonry quote request — {city}': 'Solicitud de cotización de albañilería — {city}',
+  'New masonry quote request': 'Nueva solicitud de cotización de albañilería',
+  'Name': 'Nombre',
+  'Project city': 'Ciudad del proyecto',
+  'Project type': 'Tipo de proyecto',
+  'Project details': 'Detalles del proyecto',
+  'Phone': 'Teléfono',
+  'Preferred reply': 'Medio de contacto preferido',
+  'Brick repair': 'Reparación de ladrillo',
+  'Stone exteriors': 'Exteriores de piedra',
+  'Fireplaces': 'Chimeneas interiores',
+  'Chimney masonry': 'Albañilería para chimeneas exteriores',
+  'Interior brickwork': 'Ladrillo en interiores',
+  'Commercial masonry': 'Albañilería comercial',
+  'Other / not sure yet': 'Otro / aún no lo sé',
+  'Send quote request': 'Enviar solicitud de cotización',
+  'Review quote request': 'Revisar solicitud de cotización',
+  'Sending…': 'Enviando…',
+  'Email (required)': 'Correo electrónico (obligatorio)',
+  'Email (optional)': 'Correo electrónico (opcional)',
+  'Phone (required)': 'Teléfono (obligatorio)',
+  'Phone (optional)': 'Teléfono (opcional)',
+  'Please fill out this field.': 'Completa este campo.',
+  'Please choose a project type.': 'Elige un tipo de proyecto.',
+  'Please enter a valid email address.': 'Introduce una dirección de correo electrónico válida.',
+  'Please enter a phone number with 7 to 15 digits.': 'Introduce un número de teléfono de entre 7 y 15 dígitos.',
+  'Please check this field.': 'Revisa este campo e inténtalo de nuevo.',
+  'Your request is ready to review. Nothing has been sent.': 'Tu solicitud está lista para revisar. Aún no se ha enviado nada.',
+  'Your request could not be sent. Your information is still here. Please try again later or prepare a text or email instead.': 'No se pudo enviar tu solicitud. Tu información sigue aquí. Inténtalo más tarde o prepara un mensaje de texto o un correo electrónico.',
+  'Quote requests are temporarily unavailable. Your information is still here. Please try again later or prepare a text or email instead.': 'El envío de solicitudes no está disponible por el momento. Tu información sigue aquí. Inténtalo más tarde o prepara un mensaje de texto o un correo electrónico.',
+  'Please check these fields and send again. {fields}': 'Revisa estos campos y vuelve a enviar la solicitud. {fields}',
+  'We could not confirm whether your request was received. Your information is still here. Please contact Roy before sending it again.': 'No pudimos confirmar si se recibió tu solicitud. Tu información sigue aquí. Contacta a Roy antes de volver a enviarla.',
+  'Sending your quote request…': 'Enviando tu solicitud de cotización…',
+  'Your request was received. Roy can follow up using the contact details you provided.': 'Recibimos tu solicitud. Roy podrá responderte con los datos de contacto que proporcionaste.',
+  'The request took too long, so we could not confirm whether it was received. Your information is still here. Please contact Roy before sending it again.': 'La solicitud tardó demasiado y no pudimos confirmar si se recibió. Tu información sigue aquí. Contacta a Roy antes de volver a enviarla.',
+  'We could not confirm whether your request was received. Your information is still here. Check your connection and contact Roy before sending it again.': 'No pudimos confirmar si se recibió tu solicitud. Tu información sigue aquí. Revisa tu conexión y contacta a Roy antes de volver a enviarla.',
+  'Message copied. Paste it into your preferred messaging or email app. Nothing has been sent.': 'Mensaje copiado. Pégalo en tu aplicación de mensajes o correo electrónico. Aún no se ha enviado nada.',
+  'Select and copy the message, then paste it into your preferred messaging or email app. Nothing has been sent.': 'Selecciona y copia el mensaje, y luego pégalo en tu aplicación de mensajes o correo electrónico. Aún no se ha enviado nada.',
+  'Your contact and project details go to The Corner Stone Masonry through Formspree to respond to your request. Prefer another way? Prepare a text or email instead.': 'Tus datos de contacto y del proyecto se envían a The Corner Stone Masonry a través de Formspree para responder a tu solicitud. ¿Prefieres otra opción? Prepara un mensaje de texto o un correo electrónico.',
+  'Describe your project, then choose text or email to send your request to Roy. You will review the message before sending it.': 'Describe tu proyecto y elige mensaje de texto o correo electrónico para enviarle tu solicitud a Roy. Podrás revisar el mensaje antes de enviarlo.'
+});
+
+function t(source, params = {}) {
+  return i18n?.t(source, params) ?? source.replace(/\{(\w+)\}/g, (match, name) => params[name] ?? match);
+}
 
 function setNavigation(open, { returnFocus = false } = {}) {
   const shouldOpen = Boolean(open && mobileNav.matches);
   body.classList.toggle('nav-open', shouldOpen);
   navToggle?.setAttribute('aria-expanded', String(shouldOpen));
-  navToggle?.setAttribute('aria-label', shouldOpen ? 'Close navigation' : 'Open navigation');
+  navToggle?.setAttribute('aria-label', t(shouldOpen ? 'Close navigation' : 'Open navigation'));
   nav?.setAttribute('aria-hidden', String(mobileNav.matches && !shouldOpen));
   pageContent.forEach((element) => { element.inert = shouldOpen; });
 
@@ -141,6 +201,10 @@ window.addEventListener('resize', () => {
 });
 window.addEventListener('pageshow', handleScroll);
 window.addEventListener('load', handleScroll, { once: true });
+document.addEventListener('languagechange', () => {
+  navToggle?.setAttribute('aria-label', t(body.classList.contains('nav-open') ? 'Close navigation' : 'Open navigation'));
+  updateActiveNavigation();
+});
 
 document.querySelectorAll('[data-config-link]').forEach((link) => {
   const destination = config.links?.[link.dataset.configLink];
@@ -158,17 +222,17 @@ function normalizePhoneNumber(phone) {
 function createQuoteMessage({ name, city, project, details, preferredContact, email, phone }) {
   const businessName = business.publicName ?? 'The Corner Stone Masonry';
   const contactName = business.contactShortName ?? 'Roy';
-  const contactPreference = { email: 'Email', text: 'Text message', call: 'Phone call' }[preferredContact];
+  const contactPreference = { email: t('Email'), text: t('Text message'), call: t('Phone call') }[preferredContact];
   return [
-    `Hi ${contactName}, I would like a free quote from ${businessName}.`,
+    t('Hi {contactName}, I would like a free quote from {businessName}.', { contactName, businessName }),
     '',
-    `Name: ${name}`,
-    `Project city: ${city}`,
-    `Project type: ${project}`,
-    ...(contactPreference ? [`Preferred reply: ${contactPreference}`] : []),
-    ...(email ? [`Email: ${email}`] : []),
-    ...(phone ? [`Phone: ${phone}`] : []),
-    `Details: ${details}`
+    t('Name: {name}', { name }),
+    t('Project city: {city}', { city }),
+    t('Project type: {project}', { project: t(project) }),
+    ...(contactPreference ? [t('Preferred reply: {contactPreference}', { contactPreference })] : []),
+    ...(email ? [t('Email: {email}', { email })] : []),
+    ...(phone ? [t('Phone: {phone}', { phone })] : []),
+    t('Details: {details}', { details })
   ].join('\n');
 }
 
@@ -179,7 +243,7 @@ function createQuoteSmsUrl(data) {
 
 function createQuoteEmailUrl(data) {
   const email = business.email ?? 'thecornerstonemasonryllc@gmail.com';
-  const subject = `Masonry quote request — ${data.city}`;
+  const subject = t('Masonry quote request — {city}', { city: data.city });
   return `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(createQuoteMessage(data))}`;
 }
 
@@ -231,20 +295,44 @@ if (quoteForm && quotePreview && quoteMessage && quoteText && quoteEmail && quot
   };
   const submitLabel = endpoint ? 'Send quote request' : 'Review quote request';
   let pending = false;
+  let preparedRequest = null;
+  let statusMessage = '';
+  let errorMessage = '';
+  let submissionError = null;
+  const validationMessages = new Map();
+
+  function showStatus(message) {
+    statusMessage = message;
+    if (quoteStatus) quoteStatus.textContent = t(message);
+  }
+
+  function showError(message) {
+    errorMessage = message;
+    submissionError = null;
+    if (quoteError) quoteError.textContent = t(message);
+  }
+
+  function setFieldError(field, message, { server = false } = {}) {
+    validationMessages.set(field, { message, server });
+    field.setCustomValidity(server && i18n?.language === 'es' ? t('Please check this field.') : t(message));
+    field.setAttribute('aria-invalid', 'true');
+  }
 
   function updateContactRequirements({ composing = false } = {}) {
     const needsReplyContact = Boolean(endpoint && !composing);
     const needsPhone = preferenceField?.value === 'text' || preferenceField?.value === 'call';
     if (emailField) emailField.required = needsReplyContact && !needsPhone;
     if (phoneField) phoneField.required = needsReplyContact && needsPhone;
-    if (emailLabel) emailLabel.textContent = emailField?.required ? 'Email (required)' : 'Email (optional)';
-    if (phoneLabel) phoneLabel.textContent = phoneField?.required ? 'Phone (required)' : 'Phone (optional)';
+    if (emailLabel) emailLabel.textContent = t(emailField?.required ? 'Email (required)' : 'Email (optional)');
+    if (phoneLabel) phoneLabel.textContent = t(phoneField?.required ? 'Phone (required)' : 'Phone (optional)');
   }
 
   function clearFeedback() {
     quotePreview.hidden = true;
-    if (quoteStatus) quoteStatus.textContent = '';
-    if (quoteError) quoteError.textContent = '';
+    preparedRequest = null;
+    showStatus('');
+    showError('');
+    validationMessages.clear();
     editableFields.forEach((field) => {
       field.setCustomValidity('');
       field.removeAttribute('aria-invalid');
@@ -267,12 +355,19 @@ if (quoteForm && quotePreview && quoteMessage && quoteText && quoteEmail && quot
     clearFeedback();
     editableFields.forEach((field) => { field.value = field.value.trim(); });
     updateContactRequirements({ composing });
-    if (phoneField?.value) {
-      const digits = phoneField.value.replace(/\D/g, '');
-      if (digits.length < 7 || digits.length > 15) {
-        phoneField.setCustomValidity('Please enter a phone number with 7 to 15 digits.');
+    editableFields.forEach((field) => {
+      if (field.disabled || field.readOnly) return;
+      if (field.required && !field.value) {
+        setFieldError(field, field.name === 'project' ? 'Please choose a project type.' : 'Please fill out this field.');
+      } else if (field.type === 'email' && field.value && field.validity?.typeMismatch) {
+        setFieldError(field, 'Please enter a valid email address.');
+      } else if (field === phoneField && field.value) {
+        const digits = field.value.replace(/\D/g, '');
+        if (digits.length < 7 || digits.length > 15) setFieldError(field, 'Please enter a phone number with 7 to 15 digits.');
+      } else if (field.validity && !field.validity.valid) {
+        setFieldError(field, 'Please check this field.');
       }
-    }
+    });
     const valid = quoteForm.reportValidity();
     updateContactRequirements();
     return valid;
@@ -280,13 +375,18 @@ if (quoteForm && quotePreview && quoteMessage && quoteText && quoteEmail && quot
 
   function prepareMessage() {
     if (pending || !validateRequest({ composing: true })) return;
-    const request = readRequest(new FormData(quoteForm));
-    quoteMessage.value = createQuoteMessage(request);
-    quoteText.href = createQuoteSmsUrl(request);
-    quoteEmail.href = createQuoteEmailUrl(request);
+    preparedRequest = readRequest(new FormData(quoteForm));
+    renderPreparedMessage();
     quotePreview.hidden = false;
-    if (quoteStatus) quoteStatus.textContent = 'Your request is ready to review. Nothing has been sent.';
+    showStatus('Your request is ready to review. Nothing has been sent.');
     quotePreview.focus();
+  }
+
+  function renderPreparedMessage() {
+    if (!preparedRequest) return;
+    quoteMessage.value = createQuoteMessage(preparedRequest);
+    quoteText.href = createQuoteSmsUrl(preparedRequest);
+    quoteEmail.href = createQuoteEmailUrl(preparedRequest);
   }
 
   function setPending(sending) {
@@ -294,12 +394,13 @@ if (quoteForm && quotePreview && quoteMessage && quoteText && quoteEmail && quot
     quoteFieldset.disabled = sending;
     quoteSubmit.disabled = sending;
     if (quoteFallback) quoteFallback.disabled = sending;
-    quoteSubmit.textContent = sending ? 'Sending…' : submitLabel;
+    quoteSubmit.textContent = t(sending ? 'Sending…' : submitLabel);
     quoteForm.setAttribute('aria-busy', String(sending));
   }
 
   function showSubmissionError(response, payload) {
-    if (quoteStatus) quoteStatus.textContent = '';
+    showStatus('');
+    submissionError = { response, payload };
     const fieldMessages = [];
     if (Array.isArray(payload?.errors)) {
       payload.errors.forEach((error) => {
@@ -308,20 +409,19 @@ if (quoteForm && quotePreview && quoteMessage && quoteText && quoteEmail && quot
         if (!field?.setCustomValidity) return;
         const message = typeof error.message === 'string' && error.message.trim()
           ? error.message.trim().slice(0, 240) : 'Please check this field.';
-        field.setCustomValidity(message);
-        field.setAttribute('aria-invalid', 'true');
-        fieldMessages.push(`${fieldLabels[error.field]}: ${message}`);
+        setFieldError(field, message, { server: true });
+        fieldMessages.push(`${t(fieldLabels[error.field])}: ${i18n?.language === 'es' ? t('Please check this field.') : message}`);
       });
     }
     let message = 'Your request could not be sent. Your information is still here. Please try again later or prepare a text or email instead.';
     if (response.status === 429) {
       message = 'Quote requests are temporarily unavailable. Your information is still here. Please try again later or prepare a text or email instead.';
     } else if (fieldMessages.length) {
-      message = `Please check these fields and send again. ${fieldMessages.join(' ')}`;
+      message = 'Please check these fields and send again. {fields}';
     } else if (response.ok) {
       message = 'We could not confirm whether your request was received. Your information is still here. Please contact Roy before sending it again.';
     }
-    if (quoteError) quoteError.textContent = message;
+    if (quoteError) quoteError.textContent = t(message, { fields: fieldMessages.join(' ') });
   }
 
   quoteForm.addEventListener('input', () => {
@@ -350,10 +450,12 @@ if (quoteForm && quotePreview && quoteMessage && quoteText && quoteEmail && quot
       if (!data.get(name)) data.delete(name);
     });
     data.set('message', createQuoteMessage(readRequest(data)));
+    data.set('_subject', t('New masonry quote request'));
+    data.set('language', i18n?.language ?? 'en');
     const controller = new AbortController();
     const timeout = setTimeout(() => { controller.abort(); }, 20000);
     setPending(true);
-    if (quoteStatus) quoteStatus.textContent = 'Sending your quote request…';
+    showStatus('Sending your quote request…');
     try {
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -366,15 +468,15 @@ if (quoteForm && quotePreview && quoteMessage && quoteText && quoteEmail && quot
       if (isSuccessfulSubmission(response, payload)) {
         quoteForm.reset();
         updateContactRequirements();
-        if (quoteStatus) quoteStatus.textContent = 'Your request was received. Roy can follow up using the contact details you provided.';
+        showStatus('Your request was received. Roy can follow up using the contact details you provided.');
       } else {
         showSubmissionError(response, payload);
       }
     } catch {
-      if (quoteStatus) quoteStatus.textContent = '';
-      if (quoteError) quoteError.textContent = controller.signal.aborted
+      showStatus('');
+      showError(controller.signal.aborted
         ? 'The request took too long, so we could not confirm whether it was received. Your information is still here. Please contact Roy before sending it again.'
-        : 'We could not confirm whether your request was received. Your information is still here. Check your connection and contact Roy before sending it again.';
+        : 'We could not confirm whether your request was received. Your information is still here. Check your connection and contact Roy before sending it again.');
     } finally {
       clearTimeout(timeout);
       setPending(false);
@@ -387,23 +489,36 @@ if (quoteForm && quotePreview && quoteMessage && quoteText && quoteEmail && quot
     try {
       if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
       await navigator.clipboard.writeText(quoteMessage.value);
-      if (quoteStatus) quoteStatus.textContent = 'Message copied. Paste it into your preferred messaging or email app. Nothing has been sent.';
+      showStatus('Message copied. Paste it into your preferred messaging or email app. Nothing has been sent.');
     } catch {
       quoteMessage.focus();
       quoteMessage.select();
-      if (quoteStatus) quoteStatus.textContent = 'Select and copy the message, then paste it into your preferred messaging or email app. Nothing has been sent.';
+      showStatus('Select and copy the message, then paste it into your preferred messaging or email app. Nothing has been sent.');
     }
   });
 
   quoteForm.noValidate = true;
   if (endpoint) quoteForm.action = endpoint;
   else quoteForm.removeAttribute('action');
-  quoteSubmit.textContent = submitLabel;
   if (quoteFallback) quoteFallback.hidden = !endpoint;
   if (quoteContactFields) quoteContactFields.hidden = !endpoint;
-  if (quoteHelper) quoteHelper.textContent = endpoint
-    ? 'Your contact and project details go to The Corner Stone Masonry through Formspree to respond to your request. Prefer another way? Prepare a text or email instead.'
-    : 'Describe your project, then choose text or email to send your request to Roy. You will review the message before sending it.';
-  updateContactRequirements();
+
+  function renderFormLanguage() {
+    quoteSubmit.textContent = t(pending ? 'Sending…' : submitLabel);
+    if (quoteHelper) quoteHelper.textContent = t(endpoint
+      ? 'Your contact and project details go to The Corner Stone Masonry through Formspree to respond to your request. Prefer another way? Prepare a text or email instead.'
+      : 'Describe your project, then choose text or email to send your request to Roy. You will review the message before sending it.');
+    updateContactRequirements();
+    renderPreparedMessage();
+    validationMessages.forEach(({ message, server }, field) => {
+      field.setCustomValidity(server && i18n?.language === 'es' ? t('Please check this field.') : t(message));
+    });
+    if (submissionError) showSubmissionError(submissionError.response, submissionError.payload);
+    else if (quoteError) quoteError.textContent = t(errorMessage);
+    if (quoteStatus) quoteStatus.textContent = t(statusMessage);
+  }
+
+  document.addEventListener('languagechange', renderFormLanguage);
+  renderFormLanguage();
   quoteForm.hidden = false;
 }

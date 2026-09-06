@@ -65,3 +65,62 @@
     finishMotion();
   }
 })();
+
+(function enhanceFaqMotion() {
+  if (typeof Element.prototype.animate !== 'function') return;
+
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const finishers = [];
+
+  document.querySelectorAll('.faq-list details').forEach((details) => {
+    const summary = details.querySelector('summary');
+    const answer = details.querySelector('.faq-answer');
+    if (!summary || !answer) return;
+
+    let animation = null;
+    let expanded = details.open;
+
+    function finish() {
+      if (!animation) return;
+      details.open = expanded;
+      animation.cancel();
+      animation = null;
+      details.classList.remove('is-animating', 'is-closing');
+    }
+
+    summary.addEventListener('click', (event) => {
+      // Native details remain the fallback, including when motion is reduced.
+      if (reducedMotion.matches) return;
+      event.preventDefault();
+
+      const height = details.open ? answer.getBoundingClientRect().height : 0;
+      const opacity = details.open ? getComputedStyle(answer).opacity : 0;
+      expanded = animation ? !expanded : !details.open;
+      animation?.cancel();
+
+      // Keep the answer rendered until the closing animation has finished.
+      details.open = true;
+      details.classList.add('is-animating');
+      details.classList.toggle('is-closing', !expanded);
+      animation = answer.animate([
+        { height: `${height}px`, opacity },
+        { height: `${expanded ? answer.scrollHeight : 0}px`, opacity: expanded ? 1 : 0 }
+      ], {
+        duration: expanded ? 580 : 480,
+        easing: 'cubic-bezier(.25, .1, .25, 1)',
+        fill: 'both'
+      });
+      animation.onfinish = finish;
+    });
+
+    finishers.push(finish);
+  });
+
+  const finishAll = () => finishers.forEach((finish) => finish());
+  window.addEventListener('resize', finishAll, { passive: true });
+  window.addEventListener('beforeprint', finishAll);
+  document.addEventListener('beforelanguagechange', finishAll);
+  reducedMotion.addEventListener('change', () => {
+    if (reducedMotion.matches) finishAll();
+  });
+})();
