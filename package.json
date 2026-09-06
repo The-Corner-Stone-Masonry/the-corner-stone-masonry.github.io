@@ -1,0 +1,8 @@
+{
+  "name": "the-corner-stone-masonry-site",
+  "private": true,
+  "scripts": {
+    "verify": "node --check index.js && node --check motion.js && node --check site-config.js && node --check scripts/preflight.js && node scripts/preflight.js && node --test scripts/quote.test.js",
+    "preflight": "node scripts/preflight.js"
+  }
+}

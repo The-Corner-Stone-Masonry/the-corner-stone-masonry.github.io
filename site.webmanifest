@@ -1,0 +1,16 @@
+{
+  "name": "The Corner Stone Masonry",
+  "short_name": "Corner Stone",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f8f4ed",
+  "theme_color": "#211b18",
+  "icons": [
+    {
+      "src": "assets/cornerstone-masonry-logo-cutout.webp",
+      "sizes": "1170x860",
+      "type": "image/webp",
+      "purpose": "any"
+    }
+  ]
+}
