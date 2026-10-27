@@ -7,8 +7,8 @@
   "theme_color": "#211b18",
   "icons": [
     {
-      "src": "assets/cornerstone-masonry-logo-cutout.webp",
-      "sizes": "1170x860",
+      "src": "assets/cornerstone-masonry-logo-cutout-336w.webp",
+      "sizes": "336x247",
       "type": "image/webp",
       "purpose": "any"
     }

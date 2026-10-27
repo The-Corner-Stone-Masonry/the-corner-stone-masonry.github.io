@@ -16,7 +16,7 @@ window.CornerStoneTranslations = {
   "Projects": "Proyectos",
   "Reviews": "Reseñas",
   "Contact": "Contacto",
-  "Call The Corner Stone Masonry at 217-816-0869": "Llama a The Corner Stone Masonry al 217-816-0869",
+  "Call (217) 816-0869 — The Corner Stone Masonry": "Llama (217) 816-0869 — The Corner Stone Masonry",
   "Call": "Llama",
   "Free quote": "Cotización gratis",
   "Finished residential exterior with stone veneer across the facade and gable": "Exterior terminado de una vivienda con revestimiento de piedra en la fachada y el frontón",
