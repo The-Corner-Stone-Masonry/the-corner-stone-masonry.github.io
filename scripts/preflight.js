@@ -63,7 +63,11 @@ const placeholders = [...new Set(
   [config, html, sitemap].flatMap((source) => source.match(placeholderPattern) || [])
 )];
 
-const localReferences = tags.flatMap((tag) => [attribute(tag, 'src'), attribute(tag, 'href')]);
+const localReferences = tags.flatMap((tag) => [
+  attribute(tag, 'src'),
+  attribute(tag, 'href'),
+  ...(attribute(tag, 'srcset') || '').split(',').map((candidate) => candidate.trim().split(/\s+/)[0])
+]);
 if (!Array.isArray(manifest.icons) || !manifest.icons.length) {
   errors.push('Web manifest must include an icon.');
 } else {
